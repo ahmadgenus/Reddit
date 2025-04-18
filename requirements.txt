@@ -1,7 +1,10 @@
 streamlit
 langchain
 langchain-groq
+langchain-core
 sentence-transformers
 psycopg2-binary
 python-dotenv
 praw
+sqlalchemy
+transformers
