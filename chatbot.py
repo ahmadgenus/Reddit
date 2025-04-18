@@ -49,27 +49,52 @@ def get_db_conn():
     return psycopg2.connect(os.getenv("DATABASE_URL"))
 
 # Set up the database schema: store raw post text, comments, computed embedding, and metadata.
+
 def setup_db():
     conn = get_db_conn()
     cur = conn.cursor()
-    cur.execute("""
-        CREATE EXTENSION IF NOT EXISTS vector;
-        CREATE TABLE IF NOT EXISTS reddit_posts (
-            id SERIAL PRIMARY KEY,
-            reddit_id VARCHAR(50) UNIQUE,
-            keyword TEXT,
-            title TEXT,
-            post_text TEXT,
-            comments JSONB,
-            created_at TIMESTAMP,
-            embedding VECTOR(384),
-            metadata JSONB
-        );
-        CREATE INDEX IF NOT EXISTS idx_keyword_created_at ON reddit_posts(keyword, created_at DESC);
-    """)
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("""  -- remove EXTENSION line
+            CREATE TABLE IF NOT EXISTS reddit_posts (
+                id SERIAL PRIMARY KEY,
+                reddit_id VARCHAR(50) UNIQUE,
+                keyword TEXT,
+                title TEXT,
+                post_text TEXT,
+                comments JSONB,
+                created_at TIMESTAMP,
+                embedding VECTOR(384),
+                metadata JSONB
+            );
+            CREATE INDEX IF NOT EXISTS idx_keyword_created_at ON reddit_posts(keyword, created_at DESC);
+        """)
+        conn.commit()
+    except Exception as e:
+        print("DB Setup Error:", e)
+    finally:
+        cur.close()
+        conn.close()
+# def setup_db():
+#     conn = get_db_conn()
+#     cur = conn.cursor()
+#     cur.execute("""
+#         CREATE EXTENSION IF NOT EXISTS vector;
+#         CREATE TABLE IF NOT EXISTS reddit_posts (
+#             id SERIAL PRIMARY KEY,
+#             reddit_id VARCHAR(50) UNIQUE,
+#             keyword TEXT,
+#             title TEXT,
+#             post_text TEXT,
+#             comments JSONB,
+#             created_at TIMESTAMP,
+#             embedding VECTOR(384),
+#             metadata JSONB
+#         );
+#         CREATE INDEX IF NOT EXISTS idx_keyword_created_at ON reddit_posts(keyword, created_at DESC);
+#     """)
+#     conn.commit()
+#     cur.close()
+#     conn.close()
 
 # Utility: Check if the keyword appears in the post title, selftext, or any comment.
 def keyword_in_post_or_comments(post, keyword):
